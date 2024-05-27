@@ -4,4 +4,132 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"/>
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp">
+
+        <TextView
+            android:id="@+id/monthTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="2024년 5월"
+            android:textSize="20sp" />
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:columnCount="7"
+            android:rowCount="6">
+
+            <TextView
+                android:id="@+id/sunday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="0"
+                android:gravity="center"
+                android:text="일"
+                android:textColor="#EE2222"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/monday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="1"
+                android:gravity="center"
+                android:text="월"
+                android:textColor="#222222"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/tueday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="2"
+                android:gravity="center"
+                android:text="화"
+                android:textColor="#222222"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/wedday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="3"
+                android:gravity="center"
+                android:text="수"
+                android:textColor="#222222"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/thuday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="4"
+                android:gravity="center"
+                android:text="목"
+                android:textColor="#222222"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/friday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="5"
+                android:gravity="center"
+                android:text="금"
+                android:textColor="#222222"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+
+            <TextView
+                android:id="@+id/satday"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="0"
+                android:layout_column="6"
+                android:gravity="center"
+                android:text="토"
+                android:textColor="#2222EE"
+                android:textSize="20sp"
+                android:background="#EEEEEE" />
+            <TextView
+                android:id="@+id/loading"
+                android:layout_columnWeight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_row="3"
+                android:layout_column="0"
+                android:layout_columnSpan="7"
+                android:gravity="center"
+                android:text="달력 및 데이터 로딩중..."
+                android:textSize="24sp" />
+        </GridLayout>
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
