@@ -24,6 +24,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var monthTextView : TextView
     private lateinit var gridLayout : GridLayout
     private lateinit var loading : TextView
+    private lateinit var prevWeek : Button
+    private lateinit var today : LocalDate
+    private lateinit var startday : LocalDate
+    private lateinit var nextWeek : Button
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,44 +36,48 @@ class MainActivity : AppCompatActivity() {
         monthTextView = findViewById(R.id.monthTextView)
         gridLayout = findViewById(R.id.gridLayout)
         loading = findViewById(R.id.loading)
+        prevWeek = findViewById(R.id.prevWeek)
+        nextWeek = findViewById(R.id.nextWeek)
+
+        prevWeek.setOnClickListener {
+            startday = startday.minusDays(7)
+            this.getWeeksData()
+        }
+        nextWeek.setOnClickListener {
+            startday = startday.plusDays(7)
+            this.getWeeksData()
+        }
+
 
         // 현재 년월 표시(상단)
-        val currentTime = LocalDate.now()
-        monthTextView.setText(currentTime.format(DateTimeFormatter.ofPattern("yyyy년 MM월")))
+        today = LocalDate.now()
+        startday = today.minusDays((today.dayOfWeek.value%7).toLong())
 
-        this.getWeeksData(currentTime)//.plusDays(5))
+        this.getWeeksData()
     }
 
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getWeeksData(today:LocalDate){
+    fun getWeeksData(){
         Log.d("MainActivity", "getMonthData Called!")
 
-        var year = today.year
-        var month = today.format(DateTimeFormatter.ofPattern("MM")).toInt()
-        var day = today.dayOfMonth
-        var dydlf = today.dayOfWeek.value%7
-        Log.d("MainActivivty", String.format("%d년 %d월 %d일 %d번째 요일", year, month, day, dydlf))
+        monthTextView.setText(startday.plusDays(6).format(DateTimeFormatter.ofPattern("yyyy년 MM월")))
 
-        for(i:Int in 1..dydlf){
-            var tmpDate = today.minusDays(i.toLong())
+//        var todayYear = today.year
+//        var todayMonth = today.format(DateTimeFormatter.ofPattern("MM")).toInt()
+//        var todayDay = today.dayOfMonth
+//        var todaydydlf = today.dayOfWeek.value%7
+        //Log.d("MainActivivty", String.format("%d년 %d월 %d일 %d번째 요일", year, month, day, dydlf))
+
+        for(i:Int in 0..13){
+            var tmpDate = startday.plusDays(i.toLong())
             var tmpday = tmpDate.dayOfMonth
             var tmpdydlf = tmpDate.dayOfWeek.value
-            addDayDataIntoCalander(tmpday, tmpdydlf, 0, 10, false, (dydlf-i), 1)
-        }
-        addDayDataIntoCalander(day, dydlf, 100, 10, true, dydlf, 1)
-        for(i:Int in 1..(6-dydlf)){
-            var tmpDate = today.plusDays(i.toLong())
-            var tmpday = tmpDate.dayOfMonth
-            var tmpdydlf = tmpDate.dayOfWeek.value
-            addDayDataIntoCalander(tmpday, tmpdydlf, 10*i, 20, false, (dydlf+i), 1)
-        }
-        for(i:Int in (7-dydlf)..(13-dydlf)){
-            var tmpDate = today.plusDays(i.toLong())
-            var tmpday = tmpDate.dayOfMonth
-            var tmpdydlf = tmpDate.dayOfWeek.value
-            addDayDataIntoCalander(tmpday, tmpdydlf, 85, 10*i, false, (dydlf+i)-7, 2)
+            var isToday : Boolean = tmpDate.isEqual(today)
+            var tndlq = 10*i
+            var wlcnf = 50
+            addDayDataIntoCalander(tmpday, tmpdydlf, tndlq, wlcnf, isToday, tmpdydlf%7, (i/7)+1)
 
         }
 
@@ -86,6 +94,7 @@ class MainActivity : AppCompatActivity() {
                 columnSpec = GridLayout.spec(col, 1f)
             }
         }
+        ll.setBackgroundColor(Color.parseColor("#FFFFFF"))
         if (isToday){
             ll.setBackgroundColor(Color.parseColor("#E0E0E0"))
             if (tndlq>wlcnf){
