@@ -22,6 +22,7 @@
             android:textSize="20sp" />
 
         <GridLayout
+            android:id="@+id/gridLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"
@@ -38,7 +39,7 @@
                 android:gravity="center"
                 android:text="일"
                 android:textColor="#EE2222"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
 
             <TextView
@@ -51,7 +52,7 @@
                 android:gravity="center"
                 android:text="월"
                 android:textColor="#222222"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
 
             <TextView
@@ -64,7 +65,7 @@
                 android:gravity="center"
                 android:text="화"
                 android:textColor="#222222"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
 
             <TextView
@@ -77,7 +78,7 @@
                 android:gravity="center"
                 android:text="수"
                 android:textColor="#222222"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
 
             <TextView
@@ -90,7 +91,7 @@
                 android:gravity="center"
                 android:text="목"
                 android:textColor="#222222"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
 
             <TextView
@@ -103,7 +104,7 @@
                 android:gravity="center"
                 android:text="금"
                 android:textColor="#222222"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
 
             <TextView
@@ -116,7 +117,7 @@
                 android:gravity="center"
                 android:text="토"
                 android:textColor="#2222EE"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:background="#EEEEEE" />
             <TextView
                 android:id="@+id/loading"
@@ -130,6 +131,15 @@
                 android:text="달력 및 데이터 로딩중..."
                 android:textSize="24sp" />
         </GridLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"/>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
