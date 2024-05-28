@@ -20,14 +20,22 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.Description
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+
 class MainActivity : AppCompatActivity() {
     private lateinit var monthTextView : TextView
     private lateinit var gridLayout : GridLayout
     private lateinit var loading : TextView
+    private lateinit var gatsu : TextView
     private lateinit var prevWeek : Button
     private lateinit var today : LocalDate
     private lateinit var startday : LocalDate
     private lateinit var nextWeek : Button
+    private lateinit var lineChart : LineChart
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +46,8 @@ class MainActivity : AppCompatActivity() {
         loading = findViewById(R.id.loading)
         prevWeek = findViewById(R.id.prevWeek)
         nextWeek = findViewById(R.id.nextWeek)
+        lineChart = findViewById(R.id.lineChart)
+        gatsu = findViewById(R.id.gatsu)
 
         prevWeek.setOnClickListener {
             startday = startday.minusDays(7)
@@ -48,21 +58,57 @@ class MainActivity : AppCompatActivity() {
             this.getWeeksData()
         }
 
-
         // 현재 년월 표시(상단)
         today = LocalDate.now()
         startday = today.minusDays((today.dayOfWeek.value%7).toLong())
 
         this.getWeeksData()
+
+//        var entries = ArrayList<Entry>()
+//        entries.add(Entry(0f, 10f))
+//        entries.add(Entry(1f, 20f))
+//        entries.add(Entry(2f, 15f))
+//        entries.add(Entry(3f, 25f))
+//        entries.add(Entry(4f, 18f))
+//        this.plotData(entries)
     }
 
+    fun plotData(entries:ArrayList<Entry>){
+        val dataSet = LineDataSet(entries, "지출")
+        dataSet.color  = Color.RED
+        dataSet.lineWidth = 3f
+        dataSet.setCircleColor(Color.RED)
+        dataSet.setDrawCircleHole(false)
+        dataSet.circleRadius = 1.5f
+        dataSet.setDrawValues(false)
+        val lineData = LineData(dataSet)
+        lineChart.data = lineData
+        lineChart.description.isEnabled = false
 
+        // hide Chart Description
+        val description = Description()
+        description.isEnabled = false
+        lineChart.description = description
+        // hide....what?
+        lineChart.xAxis.isEnabled = false
+        lineChart.axisLeft.isEnabled = false
+        lineChart.axisRight.isEnabled = false
+        // hide grid lines
+        lineChart.xAxis.setDrawGridLines(false)
+        lineChart.axisLeft.setDrawGridLines(false)
+        lineChart.axisRight.setDrawGridLines(false)
+        // hide legend
+        lineChart.legend.isEnabled = false
+        lineChart.setVisibleXRange(0f, 31f)
+        lineChart.invalidate()
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getWeeksData(){
         Log.d("MainActivity", "getMonthData Called!")
 
-        monthTextView.setText(startday.plusDays(6).format(DateTimeFormatter.ofPattern("yyyy년 MM월")))
+        monthTextView.setText(startday.plusDays(4).format(DateTimeFormatter.ofPattern("yyyy년 MM월")))
+        gatsu.setText(String.format("%d월", startday.plusDays(4).format(DateTimeFormatter.ofPattern("MM")).toInt()))
 
 //        var todayYear = today.year
 //        var todayMonth = today.format(DateTimeFormatter.ofPattern("MM")).toInt()
