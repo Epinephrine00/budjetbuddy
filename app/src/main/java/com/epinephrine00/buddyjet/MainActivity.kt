@@ -10,12 +10,16 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
@@ -43,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var lineChart : LineChart
     private lateinit var myHelper : myDBHelper
     private lateinit var sqlDB : SQLiteDatabase
+    private lateinit var thqlsodur : ListView
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         nextWeek = findViewById(R.id.nextWeek)
         lineChart = findViewById(R.id.lineChart)
         gatsu = findViewById(R.id.gatsu)
+        thqlsodur = findViewById(R.id.thqlsodur)
 
         myHelper = myDBHelper(this)
 
@@ -69,9 +75,16 @@ class MainActivity : AppCompatActivity() {
 
         // 현재 년월 표시(상단)
         today = LocalDate.now()
-        startday = today.minusDays((today.dayOfWeek.value%7).toLong())
+        startday = today.minusDays((today.dayOfWeek.value % 7).toLong())
 
         this.getWeeksData()
+
+        var l:List<Map<String, Any>> = getDataByDate(today)
+        for(i:Int in 1..30) {
+            l += getDataByDate(today.minusDays(i.toLong()))
+        }
+        var adapter = MyAdapter(this, l)
+        thqlsodur.adapter = adapter
 
 //        var entries = ArrayList<Entry>()
 //        entries.add(Entry(0f, 10f))
@@ -90,6 +103,25 @@ class MainActivity : AppCompatActivity() {
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
             db.execSQL("DROP TABLE IF EXISTS groupTBL")
             onCreate(db)
+        }
+    }
+
+    class MyAdapter(context: Context, private val dataList: List<Map<String, Any>>) : ArrayAdapter<Map<String, Any>>(context, 0, dataList) {
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_1, parent, false)
+            val data = getItem(position)!!
+
+            //val idTextView = view.findViewById<TextView>(R.id.idTextView)
+            //val dateTextView = view.findViewById<TextView>(R.id.dateTextView)
+            val numberTextView = view.findViewById<TextView>(R.id.numberTextView)
+            val stringTextView = view.findViewById<TextView>(R.id.stringTextView)
+
+            //idTextView.text = data["id"].toString()
+            //dateTextView.text = data["date"] as String
+            numberTextView.text = data["rmador"].toString()
+            stringTextView.text = data["apah"] as String
+
+            return view
         }
     }
 
