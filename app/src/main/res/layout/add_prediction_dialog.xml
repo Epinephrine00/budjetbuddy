@@ -14,31 +14,7 @@
         <Space
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"/>
-
-
-            <EditText
-                android:id="@+id/editTextDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:gravity="center"
-                android:hint="2024년 5월 28일"
-                android:inputType="date" />
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"/>
-        </LinearLayout>
+            android:layout_weight="2"/>
 
         <RadioGroup
             android:layout_width="match_parent"
@@ -81,7 +57,7 @@
                 android:layout_weight="1"/>
 
             <EditText
-                android:id="@+id/editTextNumber"
+                android:id="@+id/rmadordlqfur"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
@@ -104,28 +80,21 @@
             <Space
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="20"/>
+                android:layout_weight="1"/>
 
-            <Button
-                android:id="@+id/addCancelButton"
+
+            <EditText
+                android:id="@+id/predictionMemo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="취소" />
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="0.75"/>
-
-            <Button
-                android:id="@+id/addPredictionButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="추가" />
+                android:ems="10"
+                android:inputType="text"
+                android:hint="메모" />
 
             <Space
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="4"/>
+                android:layout_weight="1"/>
         </LinearLayout>
 
         <Space

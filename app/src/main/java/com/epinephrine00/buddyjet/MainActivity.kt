@@ -1,30 +1,35 @@
 package com.epinephrine00.buddyjet
 
-import android.content.res.ColorStateList
+import android.app.AlertDialog
+import android.content.ContentValues
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Color
-import android.icu.lang.UCharacter.GraphemeClusterBreak.L
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
+import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
+import androidx.appcompat.app.AppCompatActivity
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import java.lang.Exception
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var monthTextView : TextView
@@ -36,6 +41,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var startday : LocalDate
     private lateinit var nextWeek : Button
     private lateinit var lineChart : LineChart
+    private lateinit var myHelper : myDBHelper
+    private lateinit var sqlDB : SQLiteDatabase
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +55,8 @@ class MainActivity : AppCompatActivity() {
         nextWeek = findViewById(R.id.nextWeek)
         lineChart = findViewById(R.id.lineChart)
         gatsu = findViewById(R.id.gatsu)
+
+        myHelper = myDBHelper(this)
 
         prevWeek.setOnClickListener {
             startday = startday.minusDays(7)
@@ -72,6 +81,18 @@ class MainActivity : AppCompatActivity() {
 //        entries.add(Entry(4f, 18f))
 //        this.plotData(entries)
     }
+
+    class myDBHelper(context: Context?) : SQLiteOpenHelper(context, "groupDB", null, 1) {
+        override fun onCreate(db: SQLiteDatabase) {
+            db.execSQL("CREATE TABLE groupTBL (id INTEGER PRIMARY KEY AUTOINCREMENT, date DATE, rmador INTEGER, apah TEXT);")
+        }
+
+        override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+            db.execSQL("DROP TABLE IF EXISTS groupTBL")
+            onCreate(db)
+        }
+    }
+
 
     fun plotData(entries:ArrayList<Entry>){
         val dataSet = LineDataSet(entries, "지출")
@@ -118,19 +139,32 @@ class MainActivity : AppCompatActivity() {
 
         for(i:Int in 0..13){
             var tmpDate = startday.plusDays(i.toLong())
-            var tmpday = tmpDate.dayOfMonth
             var tmpdydlf = tmpDate.dayOfWeek.value
             var isToday : Boolean = tmpDate.isEqual(today)
-            var tndlq = 10*i
-            var wlcnf = 50
-            addDayDataIntoCalander(tmpday, tmpdydlf, tndlq, wlcnf, isToday, tmpdydlf%7, (i/7)+1)
+            var tndlq = 0
+            var wlcnf = 0
+            var dataList = getDataByDate(tmpDate)
+            Log.d("MainActivivty", i.toString())
+            for (data in dataList) {
+                Log.d("MainActivivty", "ID: ${data["id"]}, 날짜: ${data["date"]}, 금액: ${data["rmador"]}, 메모: ${data["apah"]}")
+                if (data["rmador"].toString().toInt() < 0)
+                    wlcnf -= data["rmador"].toString().toInt()
+                else
+                    tndlq += data["rmador"].toString().toInt()
+            }
+            addDayDataIntoCalander(tmpDate, tndlq, wlcnf, isToday, tmpdydlf%7, (i/7)+1)
 
         }
 
         loading.visibility = View.INVISIBLE
     }
 
-    fun addDayDataIntoCalander(day:Int, dydlf:Int, tndlq:Int, wlcnf:Int, isToday:Boolean, col:Int, row:Int){
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addDayDataIntoCalander(date:LocalDate, tndlq:Int, wlcnf:Int, isToday:Boolean, col:Int, row:Int){
+        var year = date.year
+        var month = date.format(DateTimeFormatter.ofPattern("MM")).toInt()
+        var day = date.dayOfMonth
+        var dydlf = date.dayOfWeek.value
         val ll = LinearLayout(this).apply{
             orientation = LinearLayout.VERTICAL
             layoutParams = GridLayout.LayoutParams().apply {
@@ -198,11 +232,120 @@ class MainActivity : AppCompatActivity() {
 
         ll.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                Toast.makeText(this, "LinearLayout touched", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this, String.format("%d년 %d월 %d일", year, month, day), Toast.LENGTH_SHORT).show()
+                var isMirai:Boolean = date.isAfter(today)
+                showDialog(year, month, day, isMirai)
             }
             true
         }
 
         gridLayout.addView(ll)
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun showDialog(year:Int, month:Int, day:Int, isMirai:Boolean) {
+        // 다이얼로그 빌더 생성
+        val builder = AlertDialog.Builder(this)
+        val inflater = layoutInflater
+        val dialogLayout = inflater.inflate(R.layout.add_prediction_dialog, null)
+
+
+        val rmadordlqfur = dialogLayout.findViewById<EditText>(R.id.rmadordlqfur)
+        val predictionMemo = dialogLayout.findViewById<EditText>(R.id.predictionMemo)
+        val tndlqrb = dialogLayout.findViewById<RadioButton>(R.id.tndlqrb)
+        val wlcnfrb = dialogLayout.findViewById<RadioButton>(R.id.wlcnfrb)
+        if (!isMirai){
+            tndlqrb.setText("수입")
+            wlcnfrb.setText("지출")
+        }
+        else {
+            tndlqrb.setText("예상 수입")
+            wlcnfrb.setText("예상 지출")
+        }
+
+        with(builder) {
+            setTitle(String.format("%d년 %d월 %d일", year, month, day))
+            setPositiveButton("추가") { dialog, which ->
+                //Toast.makeText(context, "Accepted!", Toast.LENGTH_SHORT).show()
+                try {
+                    addNewPrediction(
+                        year,
+                        month,
+                        day,
+                        tndlqrb.isChecked,
+                        rmadordlqfur.text.toString().toInt(),
+                        predictionMemo.text.toString()
+                    )
+                }catch (e:Exception){
+                    Toast.makeText(context, "입력 실패", Toast.LENGTH_SHORT).show()
+                }
+            }
+            setNegativeButton("취소") { dialog, which ->
+                Toast.makeText(context, "Dismissed!", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            setView(dialogLayout)
+            show()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addNewPrediction(year:Int, month:Int, day: Int, istndlq:Boolean, dlqfurrmador:Int, apah:String){
+        sqlDB = myHelper.writableDatabase
+        var multiplier = 1
+        if (!istndlq)
+            multiplier = -1
+        try {
+            val values = ContentValues().apply {
+                put("date", String.format("%d-%02d-%02d", year, month, day))
+                put("rmador", dlqfurrmador*multiplier)
+                put("apah", apah)
+            }
+            sqlDB.insert("groupTBL", null, values)
+            Toast.makeText(this, "입력 성공", Toast.LENGTH_SHORT).show()
+            this.getWeeksData()
+
+        } catch(e:Exception){
+            Toast.makeText(this, "입력 실패", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDataByDate(date: LocalDate): List<Map<String, Any>> {
+        val db = myHelper.readableDatabase
+        val projection = arrayOf("id", "date", "rmador", "apah")
+        val selection = "date = ?"
+        var year = date.year
+        var month = date.format(DateTimeFormatter.ofPattern("MM")).toInt()
+        var day = date.dayOfMonth
+        val selectionArgs = arrayOf(String.format("%d-%02d-%02d", year, month, day))
+
+        val cursor = db.query(
+            "groupTBL",   // 테이블
+            projection,   // 반환할 열
+            selection,    // WHERE 절
+            selectionArgs,// WHERE 절의 매개변수
+            null,         // GROUP BY 절
+            null,         // HAVING 절
+            null          // ORDER BY 절
+        )
+
+        val dataList = mutableListOf<Map<String, Any>>()
+
+        with(cursor) {
+            while (moveToNext()) {
+                val item = mutableMapOf<String, Any>()
+                item["id"] = getInt(getColumnIndexOrThrow("id"))
+                item["date"] = getString(getColumnIndexOrThrow("date"))
+                item["rmador"] = getInt(getColumnIndexOrThrow("rmador"))
+                item["apah"] = getString(getColumnIndexOrThrow("apah"))
+                dataList.add(item)
+            }
+        }
+        cursor.close()
+        return dataList
+    }
+
 }
