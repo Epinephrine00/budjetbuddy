@@ -14,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AbsListView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -25,6 +26,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Description
 import com.github.mikephil.charting.data.Entry
@@ -48,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var myHelper : myDBHelper
     private lateinit var sqlDB : SQLiteDatabase
     private lateinit var thqlsodur : ListView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         lineChart = findViewById(R.id.lineChart)
         gatsu = findViewById(R.id.gatsu)
         thqlsodur = findViewById(R.id.thqlsodur)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
 
         myHelper = myDBHelper(this)
 
@@ -78,13 +83,34 @@ class MainActivity : AppCompatActivity() {
         startday = today.minusDays((today.dayOfWeek.value % 7).toLong())
 
         this.getWeeksData()
-
-        var l:List<Map<String, Any>> = getDataByDate(today)
-        for(i:Int in 1..30) {
-            l += getDataByDate(today.minusDays(i.toLong()))
+        this.listRenderer()
+        swipeRefreshLayout.setOnRefreshListener {
+            this.listRenderer()
+            swipeRefreshLayout.isRefreshing = false
         }
-        var adapter = MyAdapter(this, l)
-        thqlsodur.adapter = adapter
+        thqlsodur.setOnScrollListener(object : AbsListView.OnScrollListener {
+            override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
+                // 스크롤 상태가 변경될 때 호출됩니다.
+                // scrollState 값은 SCROLL_STATE_IDLE, SCROLL_STATE_TOUCH_SCROLL, SCROLL_STATE_FLING 중 하나입니다.
+            }
+
+            override fun onScroll(
+                view: AbsListView?,
+                firstVisibleItem: Int,
+                visibleItemCount: Int,
+                totalItemCount: Int
+            ) {
+                // 스크롤 중에 호출됩니다.
+                // firstVisibleItem: 현재 화면에 보이는 첫 번째 아이템의 인덱스
+                // visibleItemCount: 현재 화면에 보이는 아이템의 개수
+                // totalItemCount: ListView의 총 아이템 개수
+
+                if (firstVisibleItem > 0) {
+                    //listRenderer()
+                }
+            }
+        })
+
 
 //        var entries = ArrayList<Entry>()
 //        entries.add(Entry(0f, 10f))
@@ -93,6 +119,29 @@ class MainActivity : AppCompatActivity() {
 //        entries.add(Entry(3f, 25f))
 //        entries.add(Entry(4f, 18f))
 //        this.plotData(entries)
+    }
+
+    fun plotfMonthlyData(year: Int, month: Int){
+        var entries = ArrayList<Entry>()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun listRenderer(){
+        lateinit var l : List<Any>
+        for(i:Int in 0..30) {
+            var objDate = today.minusDays(i.toLong())
+            var dateData = getDataByDate(objDate)
+            if (dateData.size>0){
+                try {
+                    l += listOf(objDate.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+                } catch(e:Exception){
+                    l = listOf(objDate.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+                }
+                l += dateData
+            }
+        }
+        var adapter = MyAdapter(this, l)
+        thqlsodur.adapter = adapter
     }
 
     class myDBHelper(context: Context?) : SQLiteOpenHelper(context, "groupDB", null, 1) {
@@ -106,23 +155,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class MyAdapter(context: Context, private val dataList: List<Map<String, Any>>) : ArrayAdapter<Map<String, Any>>(context, 0, dataList) {
+    class MyAdapter(context: Context, private val dataList: List<Any>) : ArrayAdapter<Any>(context, 0, dataList) {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_1, parent, false)
             val data = getItem(position)!!
+            when (data){
+                is String -> {
+                    val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_2, parent, false)
+                    val listViewDate = view.findViewById<TextView>(R.id.listViewDate)
+                    listViewDate?.text = data
 
-            //val idTextView = view.findViewById<TextView>(R.id.idTextView)
-            //val dateTextView = view.findViewById<TextView>(R.id.dateTextView)
-            val numberTextView = view.findViewById<TextView>(R.id.numberTextView)
-            val stringTextView = view.findViewById<TextView>(R.id.stringTextView)
+                    return view
+                }
+                is Map<*, *> -> {
+                    val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_1, parent, false)
+                    //val idTextView = view.findViewById<TextView>(R.id.idTextView)
+                    //val dateTextView = view.findViewById<TextView>(R.id.dateTextView)
+                    val numberTextView = view.findViewById<TextView>(R.id.numberTextView)
+                    val stringTextView = view.findViewById<TextView>(R.id.stringTextView)
 
-            //idTextView.text = data["id"].toString()
-            //dateTextView.text = data["date"] as String
-            numberTextView.text = data["rmador"].toString()
-            stringTextView.text = data["apah"] as String
+                    //idTextView.text = data["id"].toString()
+                    //dateTextView.text = data["date"] as String
+                    var rmador = data["rmador"] as? Int ?: 0
+                    var apah = data["apah"] as? String ?: ""
+                    Log.d("MainActivity", String.format("%d | %s", rmador, apah))
+                    numberTextView?.text = rmador.toString()
+                    stringTextView?.text = apah
 
+                    return view
+                }
+            }
+            val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_2, parent, false)
+            val listViewDate = view.findViewById<TextView>(R.id.listViewDate)
+            listViewDate?.text = ""
             return view
+
         }
+
     }
 
 
@@ -336,6 +404,7 @@ class MainActivity : AppCompatActivity() {
             sqlDB.insert("groupTBL", null, values)
             Toast.makeText(this, "입력 성공", Toast.LENGTH_SHORT).show()
             this.getWeeksData()
+            listRenderer()
 
         } catch(e:Exception){
             Toast.makeText(this, "입력 실패", Toast.LENGTH_SHORT).show()
