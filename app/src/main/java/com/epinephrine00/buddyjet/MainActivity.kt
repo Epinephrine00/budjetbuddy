@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore.Audio.Radio
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -22,6 +23,8 @@ import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.Space
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -52,6 +55,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sqlDB : SQLiteDatabase
     private lateinit var thqlsodur : ListView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private var memoizationDateBudget:MutableMap<LocalDate, Int> = mutableMapOf()
+    private var budget : Int = 0
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,23 +116,84 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        Log.d("GetOldestDate", this.getOldestDate().toString())
 
-//        var entries = ArrayList<Entry>()
+
+//        var entries = ArrayList<E ntry>()
 //        entries.add(Entry(0f, 10f))
 //        entries.add(Entry(1f, 20f))
 //        entries.add(Entry(2f, 15f))
 //        entries.add(Entry(3f, 25f))
 //        entries.add(Entry(4f, 18f))
 //        this.plotData(entries)
+
+        //this.getDateBudget(today)
+        this.plotfMonthlyData(today.plusDays(30))
     }
 
-    fun plotfMonthlyData(year: Int, month: Int){
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun plotfMonthlyData(date:LocalDate){
+        memoizationDateBudget = mutableMapOf()
+        var lastDate = date.plusDays(30)
+        var d = lastDate.dayOfMonth
+        lastDate = lastDate.minusDays(d.toLong())
+        d = date.dayOfMonth
+        var datePointer = date.minusDays((d-1).toLong())
+        while (! datePointer.isAfter(lastDate)){
+        Log.d("memoization", datePointer.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+        Log.d("memoization", getDateBudget(datePointer).toString())
+            datePointer = datePointer.plusDays(1)
+        }
+
         var entries = ArrayList<Entry>()
+        //대충 이거 추가하면 거의 끝일듯?
+
+        // 1. 가장 최근 예산액을 구한다
+        // 2. 없거나 startday와 같은 월의 1일 이후라면 가장 오래된 날짜로부터 순차적으로 계산한다
+        // 3. startday와 같은 월의 1일 이전까진 딱히 그냥 싹다 더해버려도 상관X 어차피 그거 집계 안됨
+        // 4. 미래의 예산은 점선으로 plotting한다
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getDateBudget(date:LocalDate) : Int{
+        if (date.isBefore(LocalDate.parse(getOldestDate())))
+            return 0
+        if (date in memoizationDateBudget){
+            return memoizationDateBudget[date] as Int
+        }
+        // 메모이제이션 이용한 재귀식 함수로 날짜별 예산을 계산
+
+        val dateData = getDataByDate(date)
+        var startIndex :Int = -1
+        var index : Int = 0
+        for (data in dateData){
+            var apah = data["apah"] as? String ?: ""
+            if (apah == "SysBudSet"){ // 메모가 SysBudSet이라면 예산 설정으로 취급
+                startIndex = index
+            }
+            index++
+        }
+        var budget : Int = 0
+        if (startIndex==-1){
+            budget = getDateBudget(date.minusDays(1))
+            startIndex = 0
+        }
+        for (data in dateData.drop(startIndex)){
+            var apah = data["apah"] as? String ?: ""
+            if (apah == "SysBudSet")
+                budget = data["rmador"] as Int // SysBudSet일 때 예산을 rmador으로 초기화
+            else
+                budget += data["rmador"] as Int //
+        }
+        memoizationDateBudget[date] = budget
+//        Log.d("memoization", date.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+//        Log.d("memoization", budget.toString())
+        return budget
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun listRenderer(){
-        lateinit var l : List<Any>
+        var l : List<Any> = listOf("소비 내역")
         for(i:Int in 0..30) {
             var objDate = today.minusDays(i.toLong())
             var dateData = getDataByDate(objDate)
@@ -193,36 +259,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-
-    fun plotData(entries:ArrayList<Entry>){
-        val dataSet = LineDataSet(entries, "지출")
-        dataSet.color  = Color.RED
-        dataSet.lineWidth = 3f
-        dataSet.setCircleColor(Color.RED)
-        dataSet.setDrawCircleHole(false)
-        dataSet.circleRadius = 1.5f
-        dataSet.setDrawValues(false)
-        val lineData = LineData(dataSet)
-        lineChart.data = lineData
-        lineChart.description.isEnabled = false
-
-        // hide Chart Description
-        val description = Description()
-        description.isEnabled = false
-        lineChart.description = description
-        // hide....what?
-        lineChart.xAxis.isEnabled = false
-        lineChart.axisLeft.isEnabled = false
-        lineChart.axisRight.isEnabled = false
-        // hide grid lines
-        lineChart.xAxis.setDrawGridLines(false)
-        lineChart.axisLeft.setDrawGridLines(false)
-        lineChart.axisRight.setDrawGridLines(false)
-        // hide legend
-        lineChart.legend.isEnabled = false
-        lineChart.setVisibleXRange(0f, 31f)
-        lineChart.invalidate()
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getWeeksData(){
@@ -354,13 +390,16 @@ class MainActivity : AppCompatActivity() {
         val predictionMemo = dialogLayout.findViewById<EditText>(R.id.predictionMemo)
         val tndlqrb = dialogLayout.findViewById<RadioButton>(R.id.tndlqrb)
         val wlcnfrb = dialogLayout.findViewById<RadioButton>(R.id.wlcnfrb)
+        val dPtksrb = dialogLayout.findViewById<RadioButton>(R.id.dPtksrb)
         if (!isMirai){
             tndlqrb.setText("수입")
             wlcnfrb.setText("지출")
+            dPtksrb.setText("잔고")
         }
         else {
             tndlqrb.setText("예상 수입")
             wlcnfrb.setText("예상 지출")
+            dPtksrb.setText("예상 잔고")
         }
 
         with(builder) {
@@ -447,6 +486,25 @@ class MainActivity : AppCompatActivity() {
         }
         cursor.close()
         return dataList
+    }
+
+    fun getOldestDate(): String? {
+        val db = myHelper.readableDatabase
+        val COLUMN_DATE = "date"
+        val TABLE_NAME = "groupTBL"
+        val query = "SELECT MIN($COLUMN_DATE) AS oldest_date FROM $TABLE_NAME"
+        val cursor = db.rawQuery(query, null)
+        var oldestDate: String? = null
+        var a = cursor.getColumnIndex("oldest_date")
+        if (a<0){
+            a = 0
+        }
+        if (cursor.moveToFirst()) {
+            oldestDate = cursor.getString(a)
+        }
+        cursor.close()
+        db.close()
+        return oldestDate
     }
 
 }
