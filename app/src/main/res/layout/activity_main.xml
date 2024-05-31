@@ -55,15 +55,22 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="5000원 을 썼고"
-                    android:textSize="16sp" />
+                    android:textSize="12sp" />
 
                 <TextView
-                    android:id="@+id/prepareLastMonth"
+                    android:id="@+id/skadmswksrh"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="10000원이 남았어요"
-                    android:textSize="16sp" />
+                    android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/djfakTmfrjrkxdma"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="10000원 남을 것 같아요"
+                    android:textSize="12sp" />
 
                 <Space
                     android:layout_width="match_parent"

@@ -33,12 +33,14 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Description
+import com.github.mikephil.charting.components.YAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import java.lang.Exception
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
 
 
 class MainActivity : AppCompatActivity() {
@@ -56,7 +58,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var thqlsodur : ListView
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private var memoizationDateBudget:MutableMap<LocalDate, Int> = mutableMapOf()
-    private var budget : Int = 0
+    private lateinit var wlcnfdPtks : TextView
+    private lateinit var skadmswksrh : TextView
+    private lateinit var djfakTmfrjrkxdma : TextView
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +75,9 @@ class MainActivity : AppCompatActivity() {
         gatsu = findViewById(R.id.gatsu)
         thqlsodur = findViewById(R.id.thqlsodur)
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
+        wlcnfdPtks = findViewById(R.id.wlcnfdPtks)
+        skadmswksrh = findViewById(R.id.skadmswksrh)
+        djfakTmfrjrkxdma = findViewById(R.id.djfakTmfrjrkxdma)
 
         myHelper = myDBHelper(this)
 
@@ -116,10 +123,10 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        Log.d("GetOldestDate", this.getOldestDate().toString())
+        //Log.d("GetOldestDate", this.getOldestDate().toString())
 
 
-//        var entries = ArrayList<E ntry>()
+//        var entries = ArrayList<Entry>()
 //        entries.add(Entry(0f, 10f))
 //        entries.add(Entry(1f, 20f))
 //        entries.add(Entry(2f, 15f))
@@ -128,7 +135,6 @@ class MainActivity : AppCompatActivity() {
 //        this.plotData(entries)
 
         //this.getDateBudget(today)
-        this.plotfMonthlyData(today.plusDays(30))
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -139,13 +145,121 @@ class MainActivity : AppCompatActivity() {
         lastDate = lastDate.minusDays(d.toLong())
         d = date.dayOfMonth
         var datePointer = date.minusDays((d-1).toLong())
-        while (! datePointer.isAfter(lastDate)){
-        Log.d("memoization", datePointer.format(DateTimeFormatter.ofPattern("MM월 dd일")))
-        Log.d("memoization", getDateBudget(datePointer).toString())
+        var wlcnfgkqrP : Int = 0
+//        while (! datePointer.isAfter(lastDate)){
+//            Log.d("memoization", datePointer.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+//            Log.d("memoization", getDateBudget(datePointer).toString())
+//            datePointer = datePointer.plusDays(1)
+//        }
+
+        var entries_BeforeToday_dPtks = ArrayList<Entry>()
+        var entries_AfterToday_dPtks = ArrayList<Entry>()
+        var entries_BeforeToday_wlcnf = ArrayList<Entry>()
+        var entries_AfterToday_wlcnf = ArrayList<Entry>()
+        while (! datePointer.isAfter(today)){
+            wlcnfgkqrP += getDatewlcnf(datePointer)
+            Log.d("memoization", datePointer.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+            Log.d("memoization", getDateBudget(datePointer).toString())
+            Log.d("memoization", wlcnfgkqrP.toString())
+            entries_BeforeToday_wlcnf.add(Entry(datePointer.dayOfMonth-1.toFloat(), abs(wlcnfgkqrP).toFloat()))
+            entries_BeforeToday_dPtks.add(Entry(datePointer.dayOfMonth-1.toFloat(), getDateBudget(datePointer).toFloat()))
             datePointer = datePointer.plusDays(1)
         }
+        while (! datePointer.isAfter(lastDate)){
+            wlcnfgkqrP += getDatewlcnf(datePointer)
+            Log.d("memoization", datePointer.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+            Log.d("memoization", getDateBudget(datePointer).toString())
+            Log.d("memoization", wlcnfgkqrP.toString())
+            entries_AfterToday_wlcnf.add(Entry(datePointer.dayOfMonth-1.toFloat(), abs(wlcnfgkqrP).toFloat()))
+            entries_AfterToday_dPtks.add(Entry(datePointer.dayOfMonth-1.toFloat(), getDateBudget(datePointer).toFloat()))
+            datePointer = datePointer.plusDays(1)
+        }
+        if (date.isAfter(today)){
+            skadmswksrh.text = String.format("%d원을 쓸 것 같고", abs(wlcnfgkqrP))
+            wlcnfdPtks.text = String.format("", getDateBudget(today))
+        }
+        else {
+            wlcnfdPtks.text = String.format("%d원을 썼고", abs(wlcnfgkqrP))
+            skadmswksrh.text = String.format("%d원이 남았어요", getDateBudget(today))
+        }
+        djfakTmfrjrkxdma.text = String.format("%d원 남을 것 같아요", getDateBudget(datePointer))
 
-        var entries = ArrayList<Entry>()
+        val dataSet_dPtks_BeforeToday = LineDataSet(entries_BeforeToday_dPtks, "잔고")
+        val dataSet_dPtks_AfterToday = LineDataSet(entries_AfterToday_dPtks, "예상 잔고")
+        val dataSet_wlcnf_BeforeToday = LineDataSet(entries_BeforeToday_wlcnf, "잔고")
+        val dataSet_wlcnf_AfterToday = LineDataSet(entries_AfterToday_wlcnf, "예상 잔고")
+        dataSet_dPtks_BeforeToday.color = Color.GREEN
+        dataSet_dPtks_BeforeToday.lineWidth = 3f
+        dataSet_dPtks_BeforeToday.setCircleColor(Color.GREEN)
+        dataSet_dPtks_BeforeToday.setDrawCircleHole(false)
+        dataSet_dPtks_BeforeToday.circleRadius = 1.5f
+        dataSet_dPtks_BeforeToday.setDrawValues(false)
+        dataSet_dPtks_AfterToday.color = Color.GREEN
+        dataSet_dPtks_AfterToday.lineWidth = 3f
+        dataSet_dPtks_AfterToday.setCircleColor(Color.GREEN)
+        dataSet_dPtks_AfterToday.setDrawCircleHole(false)
+        dataSet_dPtks_AfterToday.circleRadius = 1f
+        dataSet_dPtks_AfterToday.setDrawValues(false)
+        dataSet_dPtks_AfterToday.enableDashedLine(0.1f, 1f, 0f)
+        dataSet_dPtks_AfterToday.fillAlpha = 0
+        dataSet_wlcnf_BeforeToday.color = Color.RED
+        dataSet_wlcnf_BeforeToday.lineWidth = 3f
+        dataSet_wlcnf_BeforeToday.setCircleColor(Color.RED)
+        dataSet_wlcnf_BeforeToday.setDrawCircleHole(false)
+        dataSet_wlcnf_BeforeToday.circleRadius = 1.5f
+        dataSet_wlcnf_BeforeToday.setDrawValues(false)
+        dataSet_wlcnf_AfterToday.color = Color.RED
+        dataSet_wlcnf_AfterToday.lineWidth = 3f
+        dataSet_wlcnf_AfterToday.setCircleColor(Color.RED)
+        dataSet_wlcnf_AfterToday.setDrawCircleHole(false)
+        dataSet_wlcnf_AfterToday.circleRadius = 1f
+        dataSet_wlcnf_AfterToday.setDrawValues(false)
+        dataSet_wlcnf_AfterToday.enableDashedLine(0.1f, 1f, 0f)
+        dataSet_wlcnf_AfterToday.fillAlpha = 0
+
+//        var entries = ArrayList<Entry>()
+//        entries.add(Entry(0f, 10f))
+//        entries.add(Entry(1f, 20f))
+//        entries.add(Entry(2f, 15f))
+//        entries.add(Entry(3f, 25f))
+//        entries.add(Entry(4f, 18f))
+//        val dataSet = LineDataSet(entries, "지출")
+//        dataSet.color  = Color.RED
+//        dataSet.lineWidth = 3f
+//        dataSet.setCircleColor(Color.RED)
+//        dataSet.setDrawCircleHole(false)
+//        dataSet.circleRadius = 1.5f
+//        dataSet.setDrawValues(false)
+//        val lineData = LineData(dataSet)
+        var lineData = LineData()
+        lineData.addDataSet(dataSet_dPtks_BeforeToday)
+        lineData.addDataSet(dataSet_dPtks_AfterToday)
+        lineData.addDataSet(dataSet_wlcnf_BeforeToday)
+        lineData.addDataSet(dataSet_wlcnf_AfterToday)
+
+
+
+
+        lineChart.data = lineData
+        lineChart.description.isEnabled = false
+
+        // hide Chart Description
+        val description = Description()
+        description.isEnabled = false
+        lineChart.description = description
+        // hide....what?
+        lineChart.xAxis.isEnabled = false
+        lineChart.axisLeft.isEnabled = false
+        lineChart.axisRight.isEnabled = false
+        // hide grid lines
+        lineChart.xAxis.setDrawGridLines(false)
+        lineChart.axisLeft.setDrawGridLines(false)
+        lineChart.axisRight.setDrawGridLines(false)
+        // hide legend
+        lineChart.legend.isEnabled = false
+        lineChart.setVisibleXRange(0f, 31f)
+        lineChart.setVisibleYRangeMinimum(0f, YAxis.AxisDependency.LEFT)
+        lineChart.invalidate()
         //대충 이거 추가하면 거의 끝일듯?
 
         // 1. 가장 최근 예산액을 구한다
@@ -156,7 +270,7 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun getDateBudget(date:LocalDate) : Int{
-        if (date.isBefore(LocalDate.parse(getOldestDate())))
+        if (date.isBefore(getOldestDate()))
             return 0
         if (date in memoizationDateBudget){
             return memoizationDateBudget[date] as Int
@@ -192,6 +306,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
+    fun getDatewlcnf(date:LocalDate) : Int{
+        val dateData = getDataByDate(date)
+        var r: Int = 0
+        for (data in dateData){
+            var rmador = data["rmador"] as? Int ?: 0
+            if (rmador<0){
+                r += rmador
+            }
+        }
+        return r
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     fun listRenderer(){
         var l : List<Any> = listOf("소비 내역")
         for(i:Int in 0..30) {
@@ -221,7 +348,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class MyAdapter(context: Context, private val dataList: List<Any>) : ArrayAdapter<Any>(context, 0, dataList) {
+    fun deleteData(id: Int): Boolean {
+        val db = myHelper.writableDatabase
+        return db.delete("groupTBL", "id=?", arrayOf(id.toString())) > 0
+    }
+    inner class MyAdapter(context: Context, private val dataList: List<Any>) : ArrayAdapter<Any>(context, 0, dataList) {
+        @RequiresApi(Build.VERSION_CODES.O)
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val data = getItem(position)!!
             when (data){
@@ -246,6 +378,18 @@ class MainActivity : AppCompatActivity() {
                     Log.d("MainActivity", String.format("%d | %s", rmador, apah))
                     numberTextView?.text = rmador.toString()
                     stringTextView?.text = apah
+                    view.setOnClickListener {
+                        val isDeleted = this@MainActivity.deleteData(data["id"] as? Int ?:0)
+                        if (isDeleted) {
+                            // 삭제 성공
+                            Toast.makeText(this@MainActivity, "데이터 삭제 성공!", Toast.LENGTH_SHORT).show()
+                            this@MainActivity.listRenderer()
+                            this@MainActivity.getWeeksData()
+                        } else {
+                            // 삭제 실패
+                            Toast.makeText(this@MainActivity, "데이터 삭제 실패!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
 
                     return view
                 }
@@ -266,6 +410,7 @@ class MainActivity : AppCompatActivity() {
 
         monthTextView.setText(startday.plusDays(4).format(DateTimeFormatter.ofPattern("yyyy년 MM월")))
         gatsu.setText(String.format("%d월", startday.plusDays(4).format(DateTimeFormatter.ofPattern("MM")).toInt()))
+        this.plotfMonthlyData(startday.plusDays(4))
 
 //        var todayYear = today.year
 //        var todayMonth = today.format(DateTimeFormatter.ofPattern("MM")).toInt()
@@ -407,14 +552,26 @@ class MainActivity : AppCompatActivity() {
             setPositiveButton("추가") { dialog, which ->
                 //Toast.makeText(context, "Accepted!", Toast.LENGTH_SHORT).show()
                 try {
-                    addNewPrediction(
-                        year,
-                        month,
-                        day,
-                        tndlqrb.isChecked,
-                        rmadordlqfur.text.toString().toInt(),
-                        predictionMemo.text.toString()
-                    )
+                    if(dPtksrb.isChecked){
+                        addNewPrediction(
+                            year,
+                            month,
+                            day,
+                            true,
+                            rmadordlqfur.text.toString().toInt(),
+                            "SysBudSet"
+                        )
+                    }
+                    else {
+                        addNewPrediction(
+                            year,
+                            month,
+                            day,
+                            tndlqrb.isChecked,
+                            rmadordlqfur.text.toString().toInt(),
+                            predictionMemo.text.toString()
+                        )
+                    }
                 }catch (e:Exception){
                     Toast.makeText(context, "입력 실패", Toast.LENGTH_SHORT).show()
                 }
@@ -488,23 +645,24 @@ class MainActivity : AppCompatActivity() {
         return dataList
     }
 
-    fun getOldestDate(): String? {
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getOldestDate(): LocalDate? {
         val db = myHelper.readableDatabase
         val COLUMN_DATE = "date"
         val TABLE_NAME = "groupTBL"
         val query = "SELECT MIN($COLUMN_DATE) AS oldest_date FROM $TABLE_NAME"
         val cursor = db.rawQuery(query, null)
         var oldestDate: String? = null
-        var a = cursor.getColumnIndex("oldest_date")
-        if (a<0){
-            a = 0
+        try {
+            if (cursor.moveToFirst()) {
+                oldestDate = cursor.getString(cursor.getColumnIndex("oldest_date"))
+            }
+            cursor.close()
+            db.close()
+            return LocalDate.parse(oldestDate)
+        }catch(e:Exception){
+            return today
         }
-        if (cursor.moveToFirst()) {
-            oldestDate = cursor.getString(a)
-        }
-        cursor.close()
-        db.close()
-        return oldestDate
     }
 
 }
