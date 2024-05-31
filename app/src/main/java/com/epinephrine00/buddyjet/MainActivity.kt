@@ -39,6 +39,7 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import java.lang.Exception
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 
@@ -51,6 +52,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prevWeek : Button
     private lateinit var today : LocalDate
     private lateinit var startday : LocalDate
+    private lateinit var listStartDate : LocalDate
+    private lateinit var listLastDate : LocalDate
     private lateinit var nextWeek : Button
     private lateinit var lineChart : LineChart
     private lateinit var myHelper : myDBHelper
@@ -61,6 +64,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var wlcnfdPtks : TextView
     private lateinit var skadmswksrh : TextView
     private lateinit var djfakTmfrjrkxdma : TextView
+    private lateinit var prevRefreshTime : LocalDateTime
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,14 +97,22 @@ class MainActivity : AppCompatActivity() {
 
         // 현재 년월 표시(상단)
         today = LocalDate.now()
+        listStartDate = LocalDate.now()
+        listLastDate = LocalDate.now().plusDays(30)
+        prevRefreshTime = LocalDateTime.now()
         startday = today.minusDays((today.dayOfWeek.value % 7).toLong())
 
         this.getWeeksData()
         this.listRenderer()
         swipeRefreshLayout.setOnRefreshListener {
             this.listRenderer()
+            if(!prevRefreshTime.plusSeconds(2).isBefore(LocalDateTime.now())){
+                this.loadPredictions()
+            }
+            prevRefreshTime = LocalDateTime.now()
             swipeRefreshLayout.isRefreshing = false
         }
+        swipeRefreshLayout.setOn..
         thqlsodur.setOnScrollListener(object : AbsListView.OnScrollListener {
             override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
                 // 스크롤 상태가 변경될 때 호출됩니다.
@@ -122,9 +135,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
-
-        //Log.d("GetOldestDate", this.getOldestDate().toString())
-
 
 //        var entries = ArrayList<Entry>()
 //        entries.add(Entry(0f, 10f))
@@ -319,10 +329,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
+    fun loadPredictions(){
+        listStartDate = listStartDate.minusDays(14)
+        this.listRenderer()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun loadHistories(){
+        listLastDate = listLastDate.plusDays(14)
+        this.listRenderer()
+    }
+    @RequiresApi(Build.VERSION_CODES.O)
     fun listRenderer(){
         var l : List<Any> = listOf("소비 내역")
-        for(i:Int in 0..30) {
-            var objDate = today.minusDays(i.toLong())
+        var datePointer = listStartDate
+        //for(i:Int in 0..30) {
+        while(datePointer.isAfter(listLastDate)){
+            var objDate = datePointer//today.minusDays(i.toLong())
             var dateData = getDataByDate(objDate)
             if (dateData.size>0){
                 try {
