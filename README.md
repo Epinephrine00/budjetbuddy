@@ -17,10 +17,13 @@ Contact : epinephrine00@a.ut.ac.kr / epi00nephrine@gmail.com
 <br/>
 
 -----------------------------------
+<br/>
 
 ### 코드의 심각한 가독성 문제와 스파게티화 문제가 있습니다!
 
 현재 리팩토링이 진행중이며, 추가 기능들을 구현하는 중입니다. 추가 기능 구현 후에는 출시할 계획이므로 보안 등 문제로 해당 소스코드의 리포지토리는 공개하지 않습니다. 
+<br/>
+<br/>
 
 -------------------------------------
 
@@ -28,5 +31,6 @@ Contact : epinephrine00@a.ut.ac.kr / epi00nephrine@gmail.com
 All Wrongs Reserved (ɔ) Epinephrine00 in Embeded System Design Lab., Department of Computer Engineering, School of Computer, Korea National University of Transportation
 
 
+<br/>
 Genesis 1:3  |  _Dixitque Deus: "Fiat Lux", Et Facta Est Lux._  
 창세기 1:3  |  _하나님이 이르시되 빛이 있으라 하시니 빛이 있었고._
