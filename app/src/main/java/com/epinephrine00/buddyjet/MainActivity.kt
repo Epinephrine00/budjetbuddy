@@ -65,6 +65,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var skadmswksrh : TextView
     private lateinit var djfakTmfrjrkxdma : TextView
     private lateinit var prevRefreshTime : LocalDateTime
+    private lateinit var adapter : MyAdapter
+    private var isinit = true
+    private var isLoading = false
+    private var isNoMoreData = false
+    private var myViews = HashMap<Int, View>()
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,22 +102,24 @@ class MainActivity : AppCompatActivity() {
 
         // 현재 년월 표시(상단)
         today = LocalDate.now()
-        listStartDate = LocalDate.now()
-        listLastDate = LocalDate.now().plusDays(30)
+        listStartDate = LocalDate.now().minusDays(30)
+        listLastDate = LocalDate.now()
         prevRefreshTime = LocalDateTime.now()
         startday = today.minusDays((today.dayOfWeek.value % 7).toLong())
 
         this.getWeeksData()
         this.listRenderer()
         swipeRefreshLayout.setOnRefreshListener {
-            this.listRenderer()
-            if(!prevRefreshTime.plusSeconds(2).isBefore(LocalDateTime.now())){
+            isinit = true
+            myViews = HashMap<Int, View>()
+            if(!prevRefreshTime.plusSeconds(1).isBefore(LocalDateTime.now())){
                 this.loadPredictions()
             }
+            this.listRenderer()
+            isNoMoreData = false
             prevRefreshTime = LocalDateTime.now()
             swipeRefreshLayout.isRefreshing = false
         }
-        swipeRefreshLayout.setOn..
         thqlsodur.setOnScrollListener(object : AbsListView.OnScrollListener {
             override fun onScrollStateChanged(view: AbsListView?, scrollState: Int) {
                 // 스크롤 상태가 변경될 때 호출됩니다.
@@ -125,14 +132,10 @@ class MainActivity : AppCompatActivity() {
                 visibleItemCount: Int,
                 totalItemCount: Int
             ) {
-                // 스크롤 중에 호출됩니다.
-                // firstVisibleItem: 현재 화면에 보이는 첫 번째 아이템의 인덱스
-                // visibleItemCount: 현재 화면에 보이는 아이템의 개수
-                // totalItemCount: ListView의 총 아이템 개수
-
-                if (firstVisibleItem > 0) {
-                    //listRenderer()
-                }
+//                if ((!isLoading && (firstVisibleItem + visibleItemCount >= totalItemCount))&&(!isNoMoreData)) {
+//                     //추가 데이터 로드
+//                    isNoMoreData = ! this@MainActivity.loadHistories()
+//                }
             }
         })
 
@@ -330,34 +333,62 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun loadPredictions(){
-        listStartDate = listStartDate.minusDays(14)
+        listLastDate = listLastDate.plusDays(14)
         this.listRenderer()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun loadHistories(){
-        listLastDate = listLastDate.plusDays(14)
-        this.listRenderer()
+    fun loadHistories():Boolean{
+        if(listLastDate.isAfter(getOldestDate())){
+            listLastDate = listLastDate.plusDays(14)
+            this.listRenderer()
+            return true
+        }
+        else {
+            listLastDate = getOldestDate() as LocalDate
+            return false
+        }
     }
     @RequiresApi(Build.VERSION_CODES.O)
     fun listRenderer(){
+        val index = thqlsodur.firstVisiblePosition
+        val v = thqlsodur.getChildAt(0)
+        val top = v?.top ?: 0
+
         var l : List<Any> = listOf("소비 내역")
-        var datePointer = listStartDate
+        var datePointer = listLastDate
         //for(i:Int in 0..30) {
-        while(datePointer.isAfter(listLastDate)){
+        while(datePointer.isAfter(listStartDate)){
             var objDate = datePointer//today.minusDays(i.toLong())
             var dateData = getDataByDate(objDate)
             if (dateData.size>0){
                 try {
                     l += listOf(objDate.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+                    Log.d("listRenderer",objDate.format(DateTimeFormatter.ofPattern("MM월 dd일")))
                 } catch(e:Exception){
                     l = listOf(objDate.format(DateTimeFormatter.ofPattern("MM월 dd일")))
+                    Log.d("listRenderer",objDate.format(DateTimeFormatter.ofPattern("MM월 dd일")))
                 }
-                l += dateData
+                var d = dateData
+                l += d
+                for(i:Map<String, Any> in d){
+                    Log.d("listRenderer", String.format("id : %d | apah : %s | rmador : %d", i["id"], i["apah"], i["rmador"]))
+                }
             }
+            datePointer = datePointer.minusDays(1)
         }
-        var adapter = MyAdapter(this, l)
-        thqlsodur.adapter = adapter
+
+
+        if (isinit) {
+            adapter = MyAdapter(this, l)
+            thqlsodur.adapter = adapter
+            isinit = false
+        }
+        else {
+            adapter.dataList = l
+        }
+        adapter.notifyDataSetChanged()
+        thqlsodur.setSelectionFromTop(index, top)
     }
 
     class myDBHelper(context: Context?) : SQLiteOpenHelper(context, "groupDB", null, 1) {
@@ -375,52 +406,65 @@ class MainActivity : AppCompatActivity() {
         val db = myHelper.writableDatabase
         return db.delete("groupTBL", "id=?", arrayOf(id.toString())) > 0
     }
-    inner class MyAdapter(context: Context, private val dataList: List<Any>) : ArrayAdapter<Any>(context, 0, dataList) {
+    inner class MyAdapter(context: Context, var dataList: List<Any>) : ArrayAdapter<Any>(context, 0, dataList) {
         @RequiresApi(Build.VERSION_CODES.O)
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            if (position in this@MainActivity.myViews){
+                return this@MainActivity.myViews[position]!!
+            }
+            var view = convertView
             val data = getItem(position)!!
-            when (data){
-                is String -> {
-                    val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_2, parent, false)
-                    val listViewDate = view.findViewById<TextView>(R.id.listViewDate)
-                    listViewDate?.text = data
+            if (view==null) {
+                Log.d("getView", position.toString())
+                when (data) {
+                    is String -> {
+                        view = LayoutInflater.from(context)
+                            .inflate(R.layout.list_item_layout_2, parent, false)
+                    }
 
-                    return view
+                    is Map<*, *> -> {
+                        Log.d("getView", String.format("id : %d | apah : %s | rmador : %d", data["id"], data["apah"], data["rmador"]))
+                        view = LayoutInflater.from(context)
+                            .inflate(R.layout.list_item_layout_1, parent, false)
+                    }
                 }
-                is Map<*, *> -> {
-                    val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_1, parent, false)
-                    //val idTextView = view.findViewById<TextView>(R.id.idTextView)
-                    //val dateTextView = view.findViewById<TextView>(R.id.dateTextView)
-                    val numberTextView = view.findViewById<TextView>(R.id.numberTextView)
-                    val stringTextView = view.findViewById<TextView>(R.id.stringTextView)
+            }
+            when (data) {
+                is String -> {
+                    val listViewDate = view!!.findViewById<TextView>(R.id.listViewDate)
+                    listViewDate?.text = data
+                }
 
-                    //idTextView.text = data["id"].toString()
-                    //dateTextView.text = data["date"] as String
+                is Map<*, *> -> {
+                    val numberTextView = view!!.findViewById<TextView>(R.id.numberTextView)
+                    val stringTextView = view!!.findViewById<TextView>(R.id.stringTextView)
+
                     var rmador = data["rmador"] as? Int ?: 0
                     var apah = data["apah"] as? String ?: ""
                     Log.d("MainActivity", String.format("%d | %s", rmador, apah))
                     numberTextView?.text = rmador.toString()
                     stringTextView?.text = apah
-                    view.setOnClickListener {
-                        val isDeleted = this@MainActivity.deleteData(data["id"] as? Int ?:0)
+                    view!!.setOnClickListener {
+                        val isDeleted = this@MainActivity.deleteData(data["id"] as? Int ?: 0)
                         if (isDeleted) {
                             // 삭제 성공
-                            Toast.makeText(this@MainActivity, "데이터 삭제 성공!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, "데이터 삭제 성공!", Toast.LENGTH_SHORT)
+                                .show()
                             this@MainActivity.listRenderer()
                             this@MainActivity.getWeeksData()
                         } else {
                             // 삭제 실패
-                            Toast.makeText(this@MainActivity, "데이터 삭제 실패!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, "데이터 삭제 실패!", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
-
-                    return view
                 }
             }
-            val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_2, parent, false)
-            val listViewDate = view.findViewById<TextView>(R.id.listViewDate)
-            listViewDate?.text = ""
-            return view
+            //view = convertView ?: LayoutInflater.from(context).inflate(R.layout.list_item_layout_2, parent, false)
+            //val listViewDate = view.findViewById<TextView>(R.id.listViewDate)
+            //listViewDate?.text = data as String
+            this@MainActivity.myViews.put(position, view!!)
+            return view!!
 
         }
 
@@ -448,7 +492,7 @@ class MainActivity : AppCompatActivity() {
             var tndlq = 0
             var wlcnf = 0
             var dataList = getDataByDate(tmpDate)
-            Log.d("MainActivivty", i.toString())
+            //Log.d("MainActivivty", i.toString())
             for (data in dataList) {
                 Log.d("MainActivivty", "ID: ${data["id"]}, 날짜: ${data["date"]}, 금액: ${data["rmador"]}, 메모: ${data["apah"]}")
                 if (data["rmador"].toString().toInt() < 0)
